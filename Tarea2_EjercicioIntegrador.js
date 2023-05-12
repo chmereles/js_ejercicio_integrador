@@ -201,10 +201,20 @@ function findProductBySku(sku) {
 }
 
 
+/**
+ * Función auxiliar que ejecuta un console.log al devolver un resultado existoso de un callback
+ *  
+ */
 function myTest(text, callback) {
     callback().then(() => console.log(text, "\n"));
 }
 
+
+/**
+ * Se quiere poder vizualizar las distintas opciones a cumplir, y poder comparar con el estado del carrito
+ * Para lograr esto, se utiliza la funcion "myTest" y se muestra el estado del carrito
+ *  
+ */
 myTest("Al ejecutar agregarProducto 2 veces con los mismos valores debería agregar 1 solo producto con la suma de las cantidades.", async () => {
     const carrito = new Carrito();
 
