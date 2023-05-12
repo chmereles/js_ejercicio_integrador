@@ -120,6 +120,36 @@ class Carrito {
         }
     }
 
+    // 2) funcion eliminarProducto
+    eliminarProducto(sku, cantidad) {
+        return new Promise(async (resolve, reject) => {
+            const foundProduct = this.productos.find(product => product.sku === sku);
+            if (foundProduct) {
+                const producto = await findProductBySku(sku);
+
+                this.decrementTotalPrice(producto.precio, foundProduct.cantidad);
+
+                // b) Si la cantidad es menor a la cantidad de ese producto en el carrito, 
+                //    se debe restar esa cantidad al producto
+                if (cantidad < foundProduct.cantidad) {
+                    foundProduct.cantidad -= cantidad;
+
+                    this.incrementTotalPrice(producto.precio, foundProduct.cantidad);
+                } else {
+                    // c) Si la cantidad es mayor o igual a la cantidad de ese producto en el carrito, 
+                    //    se debe eliminar el producto del carrito
+                    this.productos = this.productos.filter(product => product.sku !== sku);
+                }
+
+                resolve(foundProduct);
+            } else {
+                // d) Si el producto no existe en el carrito, 
+                //    se debe mostrar un mensaje de error
+                reject(`Product ${sku} not found`);
+            }
+        });
+    }
+
     incrementTotalPrice(precio, cantidad) {
         this.updateTotalPrice(precio, cantidad)
     }
@@ -196,4 +226,32 @@ myTest("Si intento agregar un producto que no existe debería mostrar un mensaje
 
     await carrito.agregarProducto('ADD_INVALID', 2);
     carrito.showCarrito();
+});
+
+myTest("Si la cantidad es menor a la cantidad de ese producto en el carrito, se debe restar esa cantidad al producto", async () => {
+    const carrito = new Carrito();
+
+    await carrito.agregarProducto('WE328NJ', 3);
+
+    await carrito.eliminarProducto('WE328NJ', 1)
+        .then(() => carrito.showCarrito())
+        .catch((error) => console.log(error))
+});
+
+myTest("Si la cantidad es mayor o igual a la cantidad de ese producto en el carrito, se debe eliminar el producto del carrito", async () => {
+    const carrito = new Carrito();
+
+    await carrito.agregarProducto('WE328NJ', 3);
+
+    await carrito.eliminarProducto('WE328NJ', 3)
+        .then(() => carrito.showCarrito())
+        .catch(error => console.log(error));
+});
+
+myTest("Si el producto no existe en el carrito, se debe mostrar un mensaje de error", async () => {
+    const carrito = new Carrito();
+
+    await carrito.eliminarProducto('DEL_INVALID', 3)
+        .then(() => carrito.showCarrito())
+        .catch(error => console.log(error))
 });
