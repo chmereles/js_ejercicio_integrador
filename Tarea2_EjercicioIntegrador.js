@@ -81,18 +81,64 @@ class Carrito {
      * función que agrega @{cantidad} de productos con @{sku} al carrito
      */
     async agregarProducto(sku, cantidad) {
-        console.log(`Agregando ${cantidad} ${sku}`);
+        // console.log(`Agregando ${cantidad} ${sku}`);
 
-        // Busco el producto en la "base de datos"
-        const producto = await findProductBySku(sku);
+        try {
+            // Busco el producto en la "base de datos"
+            const producto = await findProductBySku(sku);
 
-        console.log("Producto encontrado", producto);
+            // console.log("Producto encontrado", producto);
 
-        // Creo un producto nuevo
-        const nuevoProducto = new ProductoEnCarrito(sku, producto.nombre, cantidad);
-        this.productos.push(nuevoProducto);
-        this.precioTotal = this.precioTotal + (producto.precio * cantidad);
-        this.categorias.push(producto.categoria);
+            // 1.a actualizar cantidad
+            const productoEncontrado = this.productos.find(producto => producto.sku == sku);
+            if (productoEncontrado) {
+                // actualizar el precio total
+                // descontar el monto anterior
+                this.decrementTotalPrice(producto.precio, productoEncontrado.cantidad);
+
+                // 1.a) Al ejecutar agregarProducto 2 veces con los mismos valores 
+                //    debería agregar 1 solo producto con la suma de las cantidades
+                productoEncontrado.cantidad += cantidad;
+
+                // actualizar el precio total con la nueva cantidad del producto
+                // this.precioTotal = this.precioTotal + (producto.precio * productoEncontrado.cantidad);
+                this.incrementTotalPrice(producto.precio, productoEncontrado.cantidad);
+            } else {
+                // Creo un producto nuevo
+                const nuevoProducto = new ProductoEnCarrito(sku, producto.nombre, cantidad);
+                this.productos.push(nuevoProducto);
+                this.incrementTotalPrice(producto.precio, cantidad);
+
+                // b) Al ejecutar agregarProducto debería actualizar la lista de categorías 
+                //    solamente si la categoría no estaba en la lista.
+                if (!this.categorias.includes(producto.categoria)) {
+                    this.categorias.push(producto.categoria);
+                }
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    incrementTotalPrice(precio, cantidad) {
+        this.updateTotalPrice(precio, cantidad)
+    }
+
+    decrementTotalPrice(precio, cantidad) {
+        this.updateTotalPrice(precio, cantidad, false)
+    }
+
+    updateTotalPrice(precio, cantidad, add = true) {
+        precio *= cantidad;
+        if (!add) {
+            precio *= -1
+        }
+
+        this.precioTotal += precio;
+    }
+
+    showCarrito() {
+        console.log(this);
     }
 }
 
@@ -124,6 +170,30 @@ function findProductBySku(sku) {
     });
 }
 
-const carrito = new Carrito();
-carrito.agregarProducto('WE328NJ', 2);
-carrito.agregarProducto('WE328NJ', 2);
+
+function myTest(text, callback) {
+    callback().then(() => console.log(text, "\n"));
+}
+
+myTest("Al ejecutar agregarProducto 2 veces con los mismos valores debería agregar 1 solo producto con la suma de las cantidades.", async () => {
+    const carrito = new Carrito();
+
+    await carrito.agregarProducto('WE328NJ', 2);
+    await carrito.agregarProducto('WE328NJ', 3);
+    carrito.showCarrito();
+});
+
+myTest("Al ejecutar agregarProducto debería actualizar la lista de categorías solamente si la categoría no estaba en la lista.", async () => {
+    const carrito = new Carrito();
+
+    await carrito.agregarProducto('FN312PPE', 2);
+    await carrito.agregarProducto('PV332MJ', 3);
+    carrito.showCarrito();
+});
+
+myTest("Si intento agregar un producto que no existe debería mostrar un mensaje de error", async () => {
+    const carrito = new Carrito();
+
+    await carrito.agregarProducto('ADD_INVALID', 2);
+    carrito.showCarrito();
+});
