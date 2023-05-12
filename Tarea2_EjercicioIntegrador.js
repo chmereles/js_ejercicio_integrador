@@ -120,7 +120,9 @@ class Carrito {
         }
     }
 
-    // 2) funcion eliminarProducto
+    /**
+     * función que elimina un producto o actualiza la @{cantidad} de productos con @{sku} al carrito
+     */
     eliminarProducto(sku, cantidad) {
         return new Promise(async (resolve, reject) => {
             const foundProduct = this.productos.find(product => product.sku === sku);
@@ -150,14 +152,25 @@ class Carrito {
         });
     }
 
+    /**
+     * función que incrementa el "precioTotal del carrito"
+     */
     incrementTotalPrice(precio, cantidad) {
         this.updateTotalPrice(precio, cantidad)
     }
 
+    /**
+     * función que decrementa el "precioTotal del carrito"
+     */
     decrementTotalPrice(precio, cantidad) {
         this.updateTotalPrice(precio, cantidad, false)
     }
 
+    /**
+     * función que actualiza el "precioTotal del carrito"
+     * 
+     * @{add} bandera que indica si se incrementa o decrementa el precio 
+     */
     updateTotalPrice(precio, cantidad, add = true) {
         precio *= cantidad;
         if (!add) {
